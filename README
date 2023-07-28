@@ -1,0 +1,20 @@
+(https://jitpack.io/#mehillid/ObjectMapper4j)
+ObjectMapper4j
+------------------------------------------------------------
+
+A given class I define as:
+- a class that is used to pass information, often has no
+methods.
+- Fields must not be final.
+- Must have an empty constructor.
+
+This library automatically converts an object into a mapped
+one without using any added classes.
+The field types supported in classes are:
+- List
+- Map
+- other data classes
+- Literals(Number, String, Boolean and primitives)
+
+To import use jitpack or the only class available
+ObjectMapper4j.
