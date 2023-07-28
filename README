@@ -1,5 +1,5 @@
-(https://jitpack.io/#mehillid/ObjectMapper4j)
-ObjectMapper4j
+(https://jitpack.io/#mehillid/com.github.unldenis.objectmapper4j.ObjectMapper4j)
+com.github.unldenis.objectmapper4j.ObjectMapper4j
 ------------------------------------------------------------
 Library that serializes objects of unknown classes into
 Maps and vice versa.
@@ -19,8 +19,12 @@ The field types supported in classes are:
 - Map
 - other data classes
 - Literals(Number, String, Boolean and primitives)
+- Enums
 
 This utility parses the data classes in LinkedHashMap.
+Enums are set as strings using the ObjectMapper4j.EnumWrapper
+class.
+I recommend you look at the UnitTests class for this.
 
 To import use jitpack or the only class available
-ObjectMapper4j.
+com.github.unldenis.objectmapper4j.ObjectMapper4j.

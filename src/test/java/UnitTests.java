@@ -2,9 +2,11 @@ import com.github.unldenis.objectmapper4j.ObjectMapper4j;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Stack;
 
 public class UnitTests {
 
@@ -27,5 +29,23 @@ public class UnitTests {
         Person person = (Person) ObjectMapper4j.toObject(mapped);
 
         assert mockPerson.equals(person);
+    }
+
+    @Test
+    public void testEnums() throws IllegalAccessException, InstantiationException, InvocationTargetException {
+        Map<String, Object> mapped = (Map<String, Object>) ObjectMapper4j.fromObject(new City(
+                "NY", City.Country.US));
+
+        mapped.put("name", "NY");
+        Object country = mapped.get("country");
+        if (country instanceof ObjectMapper4j.EnumWrapper) {
+            ObjectMapper4j.EnumWrapper wrapper = (ObjectMapper4j.EnumWrapper) country;
+            assert Arrays.equals(new String[]{"Italy", "US"}, wrapper.getValues());
+
+            wrapper.setValue("Italy");
+            assert wrapper.parseEnum().equals(City.Country.Italy);
+        }
+
+        City city = (City) ObjectMapper4j.toObject(mapped);
     }
 }
