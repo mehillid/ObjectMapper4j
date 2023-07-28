@@ -1,6 +1,10 @@
 (https://jitpack.io/#mehillid/ObjectMapper4j)
 ObjectMapper4j
 ------------------------------------------------------------
+Library that serializes objects of unknown classes into
+Maps and vice versa.
+To do the reverse step (Mapped->Classes) you must have used
+this utility previously to generate the mapped object.
 
 A given class I define as:
 - a class that is used to pass information, often has no
@@ -15,6 +19,8 @@ The field types supported in classes are:
 - Map
 - other data classes
 - Literals(Number, String, Boolean and primitives)
+
+This utility parses the data classes in LinkedHashMap.
 
 To import use jitpack or the only class available
 ObjectMapper4j.
