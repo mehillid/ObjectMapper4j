@@ -9,7 +9,7 @@ import java.util.*;
 public class ObjectMapper4j {
 
 
-    public static Object fromObject(Object obj) {
+    public static <T> T fromObject(Object obj) {
         if (obj == null) {
             return null;
         }
@@ -27,7 +27,7 @@ public class ObjectMapper4j {
 
                 EnumWrapper wrapper = new EnumWrapper(type, e.name(), Arrays.stream(enums).map(anEnum -> anEnum.name()).toArray(
                         String[]::new));
-                return wrapper;
+                return (T) wrapper;
             } catch (InvocationTargetException | IllegalAccessException ex) {
                 throw new ObjectMapperException("Error loading " + e + " from enum " + type.getName(), ex);
             }
@@ -35,7 +35,7 @@ public class ObjectMapper4j {
 
 
         if (obj instanceof Number || obj instanceof String || obj instanceof Boolean) {
-            return obj;
+            return (T) obj;
         }
 
         if (List.class.isAssignableFrom(type)) {
@@ -44,7 +44,7 @@ public class ObjectMapper4j {
             for (Object o : list) {
                 newList.add(fromObject(o));
             }
-            return newList;
+            return (T) newList;
         }
 
         if (Map.class.isAssignableFrom(type)) {
@@ -55,7 +55,7 @@ public class ObjectMapper4j {
                 Map.Entry next = mapIterator.next();
                 newMap.put(fromObject(next.getKey()), fromObject(next.getValue()));
             }
-            return newMap;
+            return (T) newMap;
         }
 
         // Data class
@@ -70,10 +70,10 @@ public class ObjectMapper4j {
                         field.getName(), type.getName()), e);
             }
         }
-        return mapObj;
+        return (T) mapObj;
     }
 
-    public static Object toObject(Object obj) throws IllegalAccessException, InstantiationException {
+    public static <T> T toObject(Object obj) throws IllegalAccessException {
         if (obj == null) {
             return null;
         }
@@ -82,14 +82,14 @@ public class ObjectMapper4j {
             EnumWrapper enumWrapper = (EnumWrapper) obj;
 
             try {
-                return enumWrapper.parseEnum();
+                return (T) enumWrapper.parseEnum();
             } catch (InvocationTargetException | IllegalAccessException ex) {
                 throw new ObjectMapperException("Error loading " + enumWrapper.value + " from enum " + enumWrapper.type.getName(), ex);
             }
         }
 
-        if (obj instanceof Number || obj instanceof String || obj instanceof Boolean || obj instanceof Enum<?>) {
-            return obj;
+        if (obj instanceof Number || obj instanceof String || obj instanceof Boolean) {
+            return (T) obj;
         }
 
         Class type = obj.getClass();
@@ -101,7 +101,7 @@ public class ObjectMapper4j {
             for (Object o : list) {
                 newList.add(toObject(o));
             }
-            return newList;
+            return (T) newList;
         }
 
         if (type.equals(LinkedHashMap.class)) {
@@ -112,7 +112,7 @@ public class ObjectMapper4j {
                 Map.Entry next = mapIterator.next();
                 newMap.put(toObject(next.getKey()), toObject(next.getValue()));
             }
-            return newMap;
+            return (T) newMap;
         }
 
         // Data class
@@ -144,7 +144,7 @@ public class ObjectMapper4j {
                 field.set(instance, toObject(next.getValue()));
             }
 
-            return instance;
+            return (T) instance;
 
 
         }
@@ -207,9 +207,9 @@ public class ObjectMapper4j {
                     "values=" + Arrays.toString(values) + ']';
         }
 
-        }
+    }
 
-    private static class ClassMap<K, V> extends LinkedHashMap<K, V> {
+    private static class ClassMap<V> extends LinkedHashMap<String, V> {
         private final Class<?> type;
 
         private ClassMap(Class<?> type) {
@@ -229,6 +229,129 @@ public class ObjectMapper4j {
         public ObjectMapperException(String message, Throwable cause) {
             super(message, cause);
         }
+    }
+
+    public static Node asTree(Object mappedObj) {
+        if (mappedObj == null) {
+            return null;
+        }
+
+        if (mappedObj instanceof EnumWrapper) {
+            return new Node(NodeType.ENUM, mappedObj);
+        }
+        if (mappedObj instanceof Number) {
+            return new Node(NodeType.NUMBER, mappedObj);
+        }
+        if (mappedObj instanceof String) {
+            return new Node(NodeType.STRING, mappedObj);
+        }
+        if (mappedObj instanceof Boolean) {
+            return new Node(NodeType.BOOLEAN, mappedObj);
+        }
+
+        Class type = mappedObj.getClass();
+        if (type.equals(ArrayList.class)) {
+            List list = (List) mappedObj;
+            List<Node> newList = new ArrayList<>();
+            for (Object o : list) {
+                newList.add(asTree(o));
+            }
+            return new Node(NodeType.LIST, newList);
+        }
+
+        if (type.equals(LinkedHashMap.class)) {
+            Map map = (Map) mappedObj;
+            Iterator<Map.Entry> mapIterator = map.entrySet().iterator();
+            Node mapNode = new Node(NodeType.MAP, new ArrayList<>());
+            while (mapIterator.hasNext()) {
+                Map.Entry next = mapIterator.next();
+                mapNode.addChild(new Node(NodeType.ENTRY, Arrays.asList(asTree(next.getKey()),
+                        asTree(next.getValue()))));
+            }
+            return mapNode;
+        }
+
+        // Data class
+        if (type.equals(ClassMap.class)) {
+            ClassMap<Object> mapObj = (ClassMap<Object>) mappedObj;
+            Iterator<Map.Entry<String, Object>> mapIterator = mapObj.entrySet().iterator();
+
+            Node mapNode = new Node(NodeType.MAP, new ArrayList<>());
+
+            while (mapIterator.hasNext()) {
+                Map.Entry<String, Object> next = mapIterator.next();
+                mapNode.addChild(new Node(NodeType.ENTRY, Arrays.asList(asTree(next.getKey()),
+                        asTree(next.getValue()))));
+            }
+            return mapNode;
+        }
+        throw new ObjectMapperException("Cannot convert object to tree");
+    }
+
+    public static class Node {
+
+        private final NodeType nodeType;
+        private final Object value;
+        private final List<Node> children;
+
+        public Node(NodeType nodeType, Object value, List<Node> children) {
+            this.nodeType = nodeType;
+            this.value = value;
+            this.children = children;
+        }
+
+        public Node(NodeType nodeType, Object value) {
+            this(nodeType, value, null);
+        }
+
+        public Node(NodeType nodeType, List<Node> children) {
+            this(nodeType, null, children);
+        }
+
+        private void addChild(Node node) {
+            children.add(node);
+        }
+
+        public NodeType getNodeType() {
+            return nodeType;
+        }
+
+        public Object getValue() {
+            return value;
+        }
+
+        public List<Node> getChildren() {
+            return children;
+        }
+
+        public Node child(int index) {
+            return children.get(index);
+        }
+
+        @Override
+        public String toString() {
+            return "Node{" +
+                    "nodeType=" + nodeType +
+                    (value != null ? ", value=" + value : "") +
+                    (children != null ? ", children=" + children : "") +
+                    '}';
+        }
+    }
+
+    public enum NodeType {
+        LIST,
+        MAP,
+
+
+        NUMBER,
+        STRING,
+        BOOLEAN,
+
+
+        ENUM,
+
+
+        ENTRY;
     }
 
 }

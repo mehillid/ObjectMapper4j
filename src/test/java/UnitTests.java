@@ -23,18 +23,17 @@ public class UnitTests {
     }
 
     @Test
-    public void serializeAndDeserialize() throws IllegalAccessException, InstantiationException {
-        Map<String, Object> mapped = (Map<String, Object>) ObjectMapper4j.fromObject(mockPerson);
+    public void serializeAndDeserialize() throws IllegalAccessException {
+        Map<String, Object> mapped = ObjectMapper4j.fromObject(mockPerson);
 
-        Person person = (Person) ObjectMapper4j.toObject(mapped);
+        Person person = ObjectMapper4j.toObject(mapped);
 
         assert mockPerson.equals(person);
     }
 
     @Test
-    public void testEnums() throws IllegalAccessException, InstantiationException, InvocationTargetException {
-        Map<String, Object> mapped = (Map<String, Object>) ObjectMapper4j.fromObject(new City(
-                "NY", City.Country.US));
+    public void testEnums() throws IllegalAccessException, InvocationTargetException {
+        Map<String, Object> mapped = ObjectMapper4j.fromObject(new City("NY", City.Country.US));
 
         mapped.put("name", "NY");
         Object country = mapped.get("country");
@@ -46,6 +45,6 @@ public class UnitTests {
             assert wrapper.parseEnum().equals(City.Country.Italy);
         }
 
-        City city = (City) ObjectMapper4j.toObject(mapped);
+        City city = ObjectMapper4j.toObject(mapped);
     }
 }
