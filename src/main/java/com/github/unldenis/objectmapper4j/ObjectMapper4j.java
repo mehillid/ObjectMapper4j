@@ -156,12 +156,16 @@ public class ObjectMapper4j {
         private final Class<?> type;
         private String value;
         private final String[] values;
-        private final Method valuesMethod;
+        private transient Method valuesMethod;
 
         private EnumWrapper(Class<?> type, String value, String... values) {
             this.type = type;
             this.value = value;
             this.values = values;
+            this.loadMethod();
+        }
+
+        private void loadMethod() {
             this.valuesMethod = Arrays.stream(type.getDeclaredMethods())
                     .filter(method -> method.getName().equals("valueOf"))
                     .filter(method -> Modifier.isStatic(method.getModifiers()))
@@ -169,7 +173,9 @@ public class ObjectMapper4j {
         }
 
         public Object parseEnum() throws InvocationTargetException, IllegalAccessException {
-
+            if(valuesMethod == null) {
+                this.loadMethod();
+            }
             return valuesMethod.invoke(type, value);
         }
 
