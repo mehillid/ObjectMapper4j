@@ -2,6 +2,7 @@ import com.github.unldenis.objectmapper4j.ObjectMapper4j;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -46,5 +47,14 @@ public class UnitTests {
         }
 
         City city = ObjectMapper4j.toObject(mapped);
+    }
+
+    @Test
+    public void serializable() throws IOException, ClassNotFoundException {
+        Map<String, Object> mapped = ObjectMapper4j.fromObject(mockPerson);
+
+        String serialized = SerializableUtils.toString(mapped);
+        Map<String, Object> deserialized = (Map<String, Object>) SerializableUtils.fromString(serialized);
+        assert mapped.equals(deserialized);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.unldenis.objectmapper4j;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -151,7 +152,7 @@ public class ObjectMapper4j {
         throw new ObjectMapperException("Cannot convert object to class");
     }
 
-    public static final class EnumWrapper {
+    public static final class EnumWrapper implements Serializable {
         private final Class<?> type;
         private String value;
         private final String[] values;
@@ -207,6 +208,10 @@ public class ObjectMapper4j {
                     "values=" + Arrays.toString(values) + ']';
         }
 
+        @Override
+        protected Object clone() throws CloneNotSupportedException {
+            return super.clone();
+        }
     }
 
     private static class ClassMap<V> extends LinkedHashMap<String, V> {
